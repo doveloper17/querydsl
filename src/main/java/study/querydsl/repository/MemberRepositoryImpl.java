@@ -59,6 +59,10 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
         return new PageImpl<>(content, pageable, totalCount);
     }
 
+    /**
+     * PageableExecutionUtils
+     * select 한 후 데이터가 pageable 조건보다 적으면 count 쿼리를 날리지 않는다.
+     */
     @Override
     public Page<MemberTeamDto> searchPageComplex(MemberSearchCondition condition, Pageable pageable) {
 
