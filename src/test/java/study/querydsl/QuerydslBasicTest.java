@@ -799,4 +799,59 @@ public class QuerydslBasicTest {
     private BooleanExpression allEq(String usernameCond, Integer ageCond) {
         return usernameEq(usernameCond).and(ageEq(ageCond));
     }
+
+    /**
+     * 벌크연산을 사용할 때는 항상 영속성 컨텍스트를 주의해야 한다.
+     */
+    @Test
+    public void bulkUpdate() {
+
+        //member1 = 10 -> 비회원으로 변경
+        //member2 = 20 -> 비회원으로 변경
+        //member3 = 30 -> 유지
+        //member4 = 40 -> 유지
+
+        long count = queryFactory
+                .update(member)
+                .set(member.username, "비회원")
+                .where(member.age.lt(28))
+                .execute();
+
+        em.flush();
+        em.clear();
+
+        List<Member> result = queryFactory
+                .selectFrom(member)
+                .fetch();
+
+        for (Member member : result) {
+            System.out.println("member = " + member);
+        }
+    }
+
+    /**
+     * +: add(n)
+     * -: add(-n)
+     * *: multiply(n)
+     * /: divide(n)
+     */
+    @Test
+    public void bulkAdd() {
+        long count = queryFactory
+                .update(member)
+                .set(member.age, member.age.divide(2))
+                .execute();
+
+        System.out.println("count = " + count);
+
+    }
+
+    @Test
+    public void bulkDelete() {
+        long count = queryFactory
+                .delete(member)
+                .where(member.age.gt(18))
+                .execute();
+        System.out.println("count = " + count);
+    }
 }
