@@ -95,7 +95,7 @@ class MemberRepositoryTest {
         int limit = 3;
         PageRequest pageRequest = PageRequest.of(offset, limit);
 
-        Page<MemberTeamDto> result = memberRepository.searchPage(condition, pageRequest);
+        Page<MemberTeamDto> result = memberRepository.searchPageSimple(condition, pageRequest);
 
         assertEquals(limit, result.getSize());
         assertThat(result.getContent())
