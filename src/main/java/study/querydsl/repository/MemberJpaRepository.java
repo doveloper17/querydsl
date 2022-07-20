@@ -3,6 +3,7 @@ package study.querydsl.repository;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import study.querydsl.dto.MemberSearchCondition;
 import study.querydsl.dto.MemberTeamDto;
@@ -18,15 +19,11 @@ import static study.querydsl.entity.QMember.*;
 import static study.querydsl.entity.QTeam.*;
 
 @Repository
+@RequiredArgsConstructor
 public class MemberJpaRepository {
 
     private final EntityManager em;
     private final JPAQueryFactory queryFactory;
-
-    public MemberJpaRepository(EntityManager em) {
-        this.em = em;
-        this.queryFactory = new JPAQueryFactory(em);
-    }
 
     public void save(Member member) {
         em.persist(member);
@@ -83,7 +80,7 @@ public class MemberJpaRepository {
                         member.username,
                         member.age,
                         team.id.as("teamId"),
-                        team.name
+                        team.name.as("teamName")
                 ))
                 .from(member)
                 .leftJoin(member.team, team)
@@ -100,7 +97,7 @@ public class MemberJpaRepository {
                         member.username,
                         member.age,
                         team.id.as("teamId"),
-                        team.name
+                        team.name.as("teamName")
                 ))
                 .from(member)
                 .leftJoin(member.team, team)
