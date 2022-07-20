@@ -1,19 +1,16 @@
 package study.querydsl.repository;
 
-import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
-import org.springframework.util.StringUtils;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import study.querydsl.dto.MemberSearchCondition;
 import study.querydsl.dto.MemberTeamDto;
 import study.querydsl.dto.QMemberTeamDto;
-import study.querydsl.entity.QMember;
-import study.querydsl.entity.QTeam;
 
-import javax.persistence.EntityManager;
 import java.util.List;
-import java.util.concurrent.locks.Condition;
 
 import static org.springframework.util.StringUtils.*;
 import static study.querydsl.entity.QMember.*;
@@ -45,6 +42,20 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
                 .fetch();
     }
 
+    /**
+     * fetchResults() 와 fetchCount()는 Querydsl에서 deprecated 되었다.
+     * 따라서 offset, limit 적용한 쿼리와 count 쿼리를 분리한다.
+     */
+    @Override
+    public Page<MemberTeamDto> searchPage(MemberSearchCondition condition, Pageable pageable) {
+
+        List<MemberTeamDto> results = searchWithPageable(condition, pageable);
+
+        Long totalCount = getTotalCount(condition);
+
+        return new PageImpl<>(results, pageable, totalCount);
+    }
+
     private BooleanExpression usernameEq(String username) {
         return hasText(username) ? member.username.eq(username) : null;
     }
@@ -59,5 +70,41 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
 
     private BooleanExpression ageLoe(Integer ageLoe) {
         return ageLoe != null ? member.age.loe(ageLoe) : null;
+    }
+
+    private List<MemberTeamDto> searchWithPageable(MemberSearchCondition condition, Pageable pageable) {
+        return queryFactory
+                .select(new QMemberTeamDto(
+                        member.id.as("memberId"),
+                        member.username,
+                        member.age,
+                        team.id.as("teamId"),
+                        team.name.as("teamName")
+                ))
+                .from(member)
+                .leftJoin(member.team, team)
+                .where(
+                        usernameEq(condition.getUsername()),
+                        teamNameEq(condition.getTeamName()),
+                        ageGoe(condition.getAgeGoe()),
+                        ageLoe(condition.getAgeLoe())
+                )
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+    }
+
+    private Long getTotalCount(MemberSearchCondition condition) {
+        return queryFactory
+                .select(member.count())
+                .from(member)
+                .leftJoin(member.team, team)
+                .where(
+                        usernameEq(condition.getUsername()),
+                        teamNameEq(condition.getTeamName()),
+                        ageGoe(condition.getAgeGoe()),
+                        ageLoe(condition.getAgeLoe())
+                )
+                .fetchOne();
     }
 }
